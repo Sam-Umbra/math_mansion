@@ -4,7 +4,7 @@ use math_mansion::app::App;
 use ratatui::{
     DefaultTerminal, Frame,
     layout::{Constraint, Layout},
-    style::{Color, Stylize},
+    style::{Color, Style, Stylize},
     widgets::{Block, BorderType, List, ListItem, Paragraph, Widget},
 };
 
@@ -25,9 +25,28 @@ fn run(mut terminal: DefaultTerminal, app_state: &mut App) -> Result<()> {
         terminal.draw(|f| render(f, app_state))?;
 
         if let Event::Key(key) = event::read()? {
+            if key.kind != event::KeyEventKind::Press {
+                continue;
+            }
+
             match key.code {
                 event::KeyCode::Esc => {
                     break;
+                }
+                event::KeyCode::Char(char) => match char {
+                    'j' => {
+                        app_state.menu.menu_state.select_next();
+                    }
+                    'k' => {
+                        app_state.menu.menu_state.select_previous();
+                    }
+                    _ => {}
+                },
+                event::KeyCode::Up => {
+                    app_state.menu.menu_state.select_previous();
+                }
+                event::KeyCode::Down => {
+                    app_state.menu.menu_state.select_next();
                 }
                 _ => {}
             }
@@ -36,7 +55,7 @@ fn run(mut terminal: DefaultTerminal, app_state: &mut App) -> Result<()> {
     Ok(())
 }
 
-fn render(frame: &mut Frame, app_state: &App) {
+fn render(frame: &mut Frame, app_state: &mut App) {
     let [border_area] = Layout::vertical([Constraint::Fill(1)])
         .margin(1)
         .areas(frame.area());
@@ -50,15 +69,18 @@ fn render(frame: &mut Frame, app_state: &App) {
         .fg(Color::Yellow)
         .render(border_area, frame.buffer_mut());
 
-    let menu_items: Vec<String> = app_state
-        .menu_state
-        .items
+    let menu_options: Vec<String> = app_state
+        .menu
+        .menu_options
         .iter()
-        .map(|x| x.0.to_string())
+        .map(|x| x.to_string())
         .collect();
 
-    List::new(menu_items.iter().map(|x| ListItem::from(x.to_string())))
-        .render(inner_area, frame.buffer_mut());
+    let menu = List::new(menu_options.iter().map(|x| ListItem::from(x.to_string())))
+        .highlight_style(Style::default().fg(Color::Green))
+        .highlight_symbol(">");
+
+    frame.render_stateful_widget(menu, inner_area, &mut app_state.menu.menu_state);
 
     // Paragraph::new(format!("{menu_items:?}")).render(frame.area(), frame.buffer_mut());
 }
