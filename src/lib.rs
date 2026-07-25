@@ -1,5 +1,13 @@
 pub mod app;
 
+pub mod components {
+    pub mod menu;
+}
+
+pub mod tui;
+
+pub mod events;
+
 pub mod math {
     #[derive(Debug)]
     pub enum FunctionFamily {

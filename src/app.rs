@@ -1,8 +1,8 @@
-use std::fmt;
+use color_eyre::eyre::Result;
+use crossterm::event::{self, Event};
+use ratatui::DefaultTerminal;
 
-use ratatui::widgets::ListState;
-
-use crate::math::Problem;
+use crate::{components::menu::Menu, events::EventHandler, math::Problem, tui};
 
 #[derive(Debug, Default)]
 pub struct App {
@@ -19,72 +19,20 @@ impl App {
     pub fn quit(&mut self) {
         self.should_quit = true;
     }
-}
 
-#[derive(Debug)]
-pub struct Menu {
-    pub menu_options: Vec<MenuOptions>,
-    pub menu_state: ListState,
-}
+    pub fn run(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
+        while !self.should_quit {
+            terminal.draw(|frame| tui::render(self, frame))?;
 
-impl Default for Menu {
-    fn default() -> Self {
-        let mut menu_options: Vec<MenuOptions> = Vec::new();
-        let mut menu_state = ListState::default();
-        menu_state.select(Some(0));
+            if let Event::Key(key) = event::read()? {
+                if key.kind != event::KeyEventKind::Press {
+                    continue;
+                }
 
-        for option in MenuOptions::iter() {
-            menu_options.push(option);
+                EventHandler::handle_key(self, key);
+            }
         }
 
-        Self {
-            menu_options: menu_options,
-            menu_state: menu_state,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum MenuOptions {
-    Start,
-    History,
-    Help,
-    AboutUs,
-    Quit,
-}
-
-impl MenuOptions {
-    fn as_str(&self) -> &'static str {
-        match self {
-            Self::Start => "Start",
-            Self::History => "History",
-            Self::Help => "Help",
-            Self::AboutUs => "About Us",
-            Self::Quit => "Quit",
-        }
-    }
-
-    pub fn iter() -> impl Iterator<Item = MenuOptions> {
-        [
-            MenuOptions::Start,
-            MenuOptions::History,
-            MenuOptions::Help,
-            MenuOptions::AboutUs,
-            MenuOptions::Quit,
-        ]
-        .iter()
-        .copied()
-    }
-}
-
-impl Default for MenuOptions {
-    fn default() -> Self {
-        Self::Start
-    }
-}
-
-impl fmt::Display for MenuOptions {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.as_str())
+        Ok(())
     }
 }
