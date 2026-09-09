@@ -1,3 +1,5 @@
 This is a TUI app, made for resolving some math problems really fast and plotting graphs too.
 
 No idea when I will finish this
+
+Currently working on a separate cargo for the math solver and parser
